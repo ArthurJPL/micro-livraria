@@ -22,7 +22,10 @@ server.addService(inventoryProto.InventoryService.service, {
     },
 });
 
-server.bindAsync('127.0.0.1:3002', grpc.ServerCredentials.createInsecure(), () => {
-    console.log('Inventory Service running at http://127.0.0.1:3002');
+const host = process.env.INVENTORY_HOST || '127.0.0.1';
+const port = process.env.INVENTORY_PORT || 3002;
+
+server.bindAsync(`${host}:${port}`, grpc.ServerCredentials.createInsecure(), () => {
+    console.log(`Inventory Service running at http://${host}:${port}`);
     server.start();
 });
