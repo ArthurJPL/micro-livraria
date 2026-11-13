@@ -1,0 +1,8 @@
+node_modules
+.git
+.gitignore
+cypress
+services/*/data
+*.log
+README.md
+requests.http

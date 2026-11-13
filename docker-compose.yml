@@ -1,0 +1,69 @@
+services:
+    frontend:
+        build:
+            context: .
+            dockerfile: frontend.Dockerfile
+        ports:
+            - "5000:5000"
+        depends_on:
+            - controller
+        networks:
+            - microlivraria
+
+    controller:
+        build:
+            context: .
+            dockerfile: controller.Dockerfile
+        ports:
+            - "3000:3000"
+        environment:
+            PORT: 3000
+            INVENTORY_ADDR: inventory:3002
+            SHIPPING_ADDR: shipping:3001
+            WISHLIST_ADDR: wishlist:3003
+        depends_on:
+            - inventory
+            - shipping
+            - wishlist
+        networks:
+            - microlivraria
+
+    inventory:
+        build:
+            context: .
+            dockerfile: inventory.Dockerfile
+        environment:
+            INVENTORY_HOST: 0.0.0.0
+            INVENTORY_PORT: 3002
+        networks:
+            - microlivraria
+
+    shipping:
+        build:
+            context: .
+            dockerfile: shipping.Dockerfile
+        environment:
+            SHIPPING_HOST: 0.0.0.0
+            SHIPPING_PORT: 3001
+        networks:
+            - microlivraria
+
+    wishlist:
+        build:
+            context: .
+            dockerfile: wishlist.Dockerfile
+        environment:
+            WISHLIST_HOST: 0.0.0.0
+            WISHLIST_PORT: 3003
+            WISHLIST_DATA_FILE: /app/data/wishlist.json
+        volumes:
+            - wishlist_data:/app/data
+        networks:
+            - microlivraria
+
+networks:
+    microlivraria:
+        driver: bridge
+
+volumes:
+    wishlist_data:
