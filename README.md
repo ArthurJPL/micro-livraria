@@ -22,18 +22,19 @@ No restante deste documento vamos:
 
 ## Arquitetura
 
-A micro-livraria possui quatro microsserviços:
+A micro-livraria possui cinco microsserviços:
 
--   Front-end: microsserviço responsável pela interface com usuário, conforme mostrado na figura anterior.
+-   Front-end: microsserviço responsável pela interface com usuário, incluindo a listagem de livros, o cálculo de frete e a lista de desejos.
 -   Controller: microsserviço responsável por intermediar a comunicação entre o front-end e o backend do sistema.
 -   Shipping: microserviço para cálculo de frete.
 -   Inventory: microserviço para controle do estoque da livraria.
+-   Wishlist: microsserviço para gerenciar a lista de desejos dos clientes.
 
-Os quatro microsserviços estão implementados em **JavaScript**, usando o Node.js para execução dos serviços no back-end.
+Os cinco microsserviços estão implementados em **JavaScript**, usando o Node.js para execução dos serviços no back-end.
 
 No entanto, **você conseguirá completar as tarefas práticas mesmo se nunca programou em JavaScript**. O motivo é que o nosso roteiro já inclui os trechos de código que devem ser copiados para o sistema.
 
-Para facilitar a execução e entendimento do sistema, também não usamos bancos de dados ou serviços externos.
+Para facilitar a execução e entendimento do sistema, também não usamos bancos de dados ou serviços externos. O serviço `Wishlist` persiste seus dados em um arquivo JSON simples, montado em um volume Docker quando a aplicação é executada via Docker Compose.
 
 ## Protocolos de Comunicação
 
@@ -113,6 +114,90 @@ curl -i -X GET http://localhost:3000/products
 -   Caso contrário, você pode fazer uma requisição acessando, no seu navegador, a seguinte URL: `http://localhost:3000/products`.
 
 7. Teste agora o sistema como um todo, abrindo o front-end em um navegador: http://localhost:5000. Faça então um teste das principais funcionalidades da livraria.
+
+## Executando com Docker Compose
+
+Além da execução local, o projeto agora possui um `docker-compose.yml` com a stack completa: frontend, controller, inventory, shipping e wishlist.
+
+Para compilar as imagens e subir todos os containers:
+
+```
+docker compose up --build
+```
+
+Depois disso:
+
+-   Frontend: http://localhost:5000
+-   Controller/API: http://localhost:3000
+-   Serviços `inventory`, `shipping` e `wishlist` ficam acessíveis apenas dentro da rede Docker `microlivraria`.
+
+O serviço `wishlist` grava os dados em `/app/data/wishlist.json`. Esse diretório é montado no volume nomeado `wishlist_data`, portanto os itens permanecem após reinícios dos containers.
+
+Para encerrar:
+
+```
+docker compose down
+```
+
+Para remover também o volume de dados da lista de desejos:
+
+```
+docker compose down -v
+```
+
+## API da Lista de Desejos
+
+O microsserviço `Wishlist` usa gRPC na porta interna `3003` e é exposto pelo Controller por meio das seguintes rotas REST:
+
+-   `POST /wishlist`: cria um item na lista de desejos.
+-   `GET /wishlist`: lista todos os itens da lista de desejos.
+-   `DELETE /wishlist/:id`: remove um item pelo ID do item da wishlist.
+
+Exemplo de criação:
+
+```bash
+curl -X POST http://localhost:3000/wishlist \
+  -H "Content-Type: application/json" \
+  -d '{"bookId":1,"bookName":"Refactoring","userId":"frontend"}'
+```
+
+Exemplo de listagem:
+
+```bash
+curl http://localhost:3000/wishlist
+```
+
+A rota `GET /wishlist` retorna um array JSON diretamente. O campo `userId` é opcional; o frontend envia `frontend`. A lista é compartilhada e permite adicionar e remover itens.
+
+Exemplo de remoção do item de ID 1:
+
+```bash
+curl -X DELETE http://localhost:3000/wishlist/1
+```
+
+### Uso no frontend
+
+1. Abra o frontend em http://localhost:5000.
+2. Clique em **Adicionar à lista** em qualquer livro.
+3. O botão do livro passa a exibir **Remover da lista**.
+4. Clique novamente para remover o livro da lista.
+5. Recarregue a página para confirmar que o estado dos botões foi mantido.
+
+A seção visual da lista abaixo dos livros foi removida; a wishlist é controlada diretamente pelos botões dos livros.
+
+### Documentação detalhada
+
+Consulte [docs/wishlist.md](docs/wishlist.md) para:
+
+-   arquitetura, modelo de dados e fluxo completo;
+-   contrato gRPC e rotas REST, incluindo remoção;
+-   exemplos com `curl`, `curl.exe` e `Invoke-RestMethod` no PowerShell;
+-   configuração, persistência local e em volume Docker;
+-   testes, solução de problemas, segurança e limitações.
+
+A especificação da API REST está em [docs/openapi.yaml](docs/openapi.yaml) e pode ser importada no Swagger Editor, Postman ou Insomnia.
+
+Também é possível testar as requisições usando o arquivo [requests.http](requests.http), compatível com a extensão REST Client do VS Code.
 
 ## Tarefa Prática #1: Implementando uma Nova Operação
 

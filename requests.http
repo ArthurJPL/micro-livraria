@@ -1,0 +1,44 @@
+@baseUrl = http://localhost:3000
+@userId = frontend
+@wishlistItemId = 1
+
+### Listar produtos
+GET {{baseUrl}}/products
+
+### Calcular frete
+GET {{baseUrl}}/shipping/30140071
+
+### Criar item na lista de desejos
+POST {{baseUrl}}/wishlist
+Content-Type: application/json
+
+{
+    "bookId": 1,
+    "bookName": "Refactoring",
+    "userId": "{{userId}}"
+}
+
+### Criar outro item na lista de desejos
+POST {{baseUrl}}/wishlist
+Content-Type: application/json
+
+{
+    "bookId": 2,
+    "bookName": "Engenharia De Software Moderna",
+    "userId": "{{userId}}"
+}
+
+### Listar lista de desejos
+GET {{baseUrl}}/wishlist
+
+### Remover item da lista de desejos
+DELETE {{baseUrl}}/wishlist/{{wishlistItemId}}
+
+### Remover item inexistente (deve retornar 404)
+DELETE {{baseUrl}}/wishlist/999
+
+### Requisição inválida (bookId ausente)
+POST {{baseUrl}}/wishlist
+Content-Type: application/json
+
+{}
